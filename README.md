@@ -1,10 +1,19 @@
-# 健康管理アプリ (Healthcare App)
+# Healthcare App 2 🏥
 
-あすけんのような健康管理アプリのダッシュボードです。React.js + Material-UI で開発されています。
+React + TypeScript + FastAPI で構築されたヘルスケア管理アプリケーション
 
-## 機能
+## 🚀 新機能
 
-### 📊 ダッシュボード
+現在のブランチ（`add_fast_api`）では、以下の機能が実装されています：
+
+- **FastAPI バックエンド**: REST API サーバー
+- **データ取得**: バックエンドからリアルタイムでデータを取得
+- **API ドキュメント**: Swagger UI での API 仕様確認
+- **モジュラー設計**: フロントエンド・バックエンド分離
+
+## 📊 ダッシュボード機能
+
+### 健康管理機能
 - **カロリー管理**: 目標摂取カロリーに対する進捗表示
 - **食事の内訳**: 朝食・昼食・夕食・間食の円グラフ表示
 - **体重管理**: 体重推移の折れ線グラフ
@@ -18,70 +27,132 @@
 - **インタラクティブなグラフ**: Rechartsによるデータ可視化
 - **Material-UI**: モダンなUIコンポーネント
 
-## 技術スタック
+## 🛠 技術スタック
 
-- **React.js** (TypeScript)
+### フロントエンド
+- **React.js 19.1.1** (TypeScript)
 - **Material-UI (MUI)** - UIコンポーネント
 - **Recharts** - グラフライブラリ
 - **Emotion** - CSS-in-JS
 
-## セットアップ
+### バックエンド
+- **FastAPI** - 高速な Python Web フレームワーク
+- **Pydantic** - データバリデーション
+- **Uvicorn** - ASGI サーバー
+
+## 🚀 セットアップ & 起動
 
 ### 前提条件
-- Node.js (v14以上)
+- Node.js (v16以上)
+- Python (v3.8以上)
 - npm または yarn
 
-### インストール
-
+### 1. プロジェクトのクローン
 ```bash
-# 依存関係をインストール
+git clone <repository-url>
+cd healthcare-app2
+```
+
+### 2. フロントエンド セットアップ
+```bash
+# 依存関係のインストール
 npm install
 
-# 開発サーバーを起動
+# 開発サーバー起動
 npm start
 ```
 
-## 利用可能なスクリプト
+### 3. バックエンド セットアップ
+```bash
+# バックエンドディレクトリに移動
+cd backend
 
-プロジェクトディレクトリで実行できるコマンド：
+# 依存関係のインストール
+pip install fastapi uvicorn pydantic python-multipart
 
-### `npm start`
+# サーバー起動
+python main.py
+```
 
-開発モードでアプリを起動します。
-ブラウザで [http://localhost:3000](http://localhost:3000) を開いて表示できます。
+または、Windowsの場合：
+```bash
+# プロジェクトルートから
+start-backend.bat
+```
 
-### `npm test`
+### 📱 アクセス URL
 
-インタラクティブなウォッチモードでテストランナーを起動します。
+- **フロントエンド**: http://localhost:3000
+- **バックエンド API**: http://localhost:8000
+- **API ドキュメント (Swagger)**: http://localhost:8000/docs
+- **API ドキュメント (ReDoc)**: http://localhost:8000/redoc
 
-### `npm run build`
+## 🔗 API エンドポイント
 
-プロダクション用に`build`フォルダにアプリをビルドします。
+| メソッド | エンドポイント | 説明 |
+|---------|---------------|------|
+| GET | `/api/user` | ユーザー情報取得 |
+| GET | `/api/weight-data` | 体重推移データ取得 |
+| GET | `/api/calorie-data` | カロリー摂取データ取得 |
+| GET | `/api/meals` | 食事記録取得 |
+| POST | `/api/meals` | 食事記録追加 |
+| GET | `/api/activity` | アクティビティデータ取得 |
+| GET | `/api/today-calories` | 今日の総摂取カロリー取得 |
 
-### `npm run eject`
+## 📁 プロジェクト構造
 
-**注意: これは一方向の操作です。一度`eject`すると元に戻せません！**
+```
+healthcare-app2/
+├── public/                 # 静的ファイル
+├── src/                   # React ソースコード
+│   ├── components/        # コンポーネント
+│   ├── hooks/            # カスタムフック
+│   │   └── useHealthData.ts  # データ取得フック
+│   ├── services/         # API サービス
+│   │   └── apiService.ts    # バックエンド通信
+│   ├── data/            # テストデータ
+│   └── App.tsx          # メインアプリケーション
+├── backend/              # FastAPI バックエンド
+│   ├── main.py          # FastAPI アプリケーション
+│   ├── requirements.txt # Python 依存関係
+│   └── README.md        # バックエンド ドキュメント
+├── start-backend.bat    # Windows バックエンド起動スクリプト
+└── README.md            # プロジェクト ドキュメント
+```
 
-## 仮ユーザーデータ
+## ✅ 開発状況
+
+- [x] フロントエンド UI 実装
+- [x] バックエンド API 実装
+- [x] フロント・バック連携
+- [x] テストデータでの動作確認
+- [x] カスタムフック実装
+- [x] エラーハンドリング
+- [ ] データベース連携
+- [ ] 認証機能
+- [ ] デプロイ設定
+
+## 🔮 今後の予定
+
+1. **データベース連携** (SQLite/PostgreSQL)
+2. **ユーザー認証機能** の実装
+3. **データの永続化**
+4. **モバイル対応** の向上
+5. **テストケース** の追加
+6. **Docker化**
+7. **CI/CD パイプライン** 構築
+
+## 🧪 テストデータ
 
 現在は以下の仮ユーザーでダッシュボードを表示しています：
 
 - **名前**: 田中 太郎
-- **年齢**: 28歳
+- **年齢**: 28歳  
 - **身長**: 170cm
 - **現在体重**: 68.5kg
 - **目標体重**: 65kg
 - **目標カロリー**: 2000kcal/日
 
-## 今後の拡張予定
-
-- [ ] ユーザー認証機能
-- [ ] 食事検索・登録機能
-- [ ] 運動記録機能
-- [ ] レポート・分析機能
-- [ ] 目標設定機能
-- [ ] 通知機能
-
-## ライセンス
+## 📄 ライセンス
 
 このプロジェクトはMITライセンスの下で公開されています。
