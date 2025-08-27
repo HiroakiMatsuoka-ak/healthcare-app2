@@ -1,46 +1,87 @@
-# Getting Started with Create React App
+# 健康管理アプリ (Healthcare App)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+あすけんのような健康管理アプリのダッシュボードです。React.js + Material-UI で開発されています。
 
-## Available Scripts
+## 機能
 
-In the project directory, you can run:
+### 📊 ダッシュボード
+- **カロリー管理**: 目標摂取カロリーに対する進捗表示
+- **食事の内訳**: 朝食・昼食・夕食・間食の円グラフ表示
+- **体重管理**: 体重推移の折れ線グラフ
+- **アクティビティ追跡**: 歩数、水分摂取、健康スコア
+- **食事記録**: 今日の食事履歴一覧
+- **クイックアクション**: 各種記録ボタン
+
+### 🎯 主な特徴
+- **レスポンシブデザイン**: モバイル・デスクトップ対応
+- **リアルタイム進捗**: プログレスバーでの視覚的表示
+- **インタラクティブなグラフ**: Rechartsによるデータ可視化
+- **Material-UI**: モダンなUIコンポーネント
+
+## 技術スタック
+
+- **React.js** (TypeScript)
+- **Material-UI (MUI)** - UIコンポーネント
+- **Recharts** - グラフライブラリ
+- **Emotion** - CSS-in-JS
+
+## セットアップ
+
+### 前提条件
+- Node.js (v14以上)
+- npm または yarn
+
+### インストール
+
+```bash
+# 依存関係をインストール
+npm install
+
+# 開発サーバーを起動
+npm start
+```
+
+## 利用可能なスクリプト
+
+プロジェクトディレクトリで実行できるコマンド：
 
 ### `npm start`
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+開発モードでアプリを起動します。
+ブラウザで [http://localhost:3000](http://localhost:3000) を開いて表示できます。
 
 ### `npm test`
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+インタラクティブなウォッチモードでテストランナーを起動します。
 
 ### `npm run build`
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+プロダクション用に`build`フォルダにアプリをビルドします。
 
 ### `npm run eject`
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+**注意: これは一方向の操作です。一度`eject`すると元に戻せません！**
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 仮ユーザーデータ
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+現在は以下の仮ユーザーでダッシュボードを表示しています：
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+- **名前**: 田中 太郎
+- **年齢**: 28歳
+- **身長**: 170cm
+- **現在体重**: 68.5kg
+- **目標体重**: 65kg
+- **目標カロリー**: 2000kcal/日
 
-## Learn More
+## 今後の拡張予定
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- [ ] ユーザー認証機能
+- [ ] 食事検索・登録機能
+- [ ] 運動記録機能
+- [ ] レポート・分析機能
+- [ ] 目標設定機能
+- [ ] 通知機能
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## ライセンス
+
+このプロジェクトはMITライセンスの下で公開されています。
