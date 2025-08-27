@@ -84,7 +84,7 @@ const App: React.FC = () => {
               こんにちは、{user.name}さん！
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              今日も健康管理を頑張りましょう
+              今日もフィットネス管理を頑張りましょう
             </Typography>
           </Box>
         </Box>
