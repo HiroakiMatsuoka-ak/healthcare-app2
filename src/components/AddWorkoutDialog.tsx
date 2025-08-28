@@ -11,7 +11,6 @@ import {
   AccordionDetails,
   Box,
   Chip,
-  Divider,
   Alert
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';

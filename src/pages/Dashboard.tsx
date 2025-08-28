@@ -23,7 +23,7 @@ import {
 } from '@mui/icons-material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useNavigate } from 'react-router-dom';
-import { useUser, useWeightData, useCalorieData, useMeals, useActivity, useTodayCalories, useFoodMenu, useWorkouts, useTodayWorkouts } from '../hooks/useHealthData';
+import { useUser, useWeightData, useCalorieData, useMeals, useActivity, useTodayCalories, useFoodMenu, useWorkouts } from '../hooks/useHealthData';
 import AddMealDialog from '../components/AddMealDialog';
 import MealDetailCard from '../components/MealDetailCard';
 import { AddWorkoutDialog } from '../components/AddWorkoutDialog';
@@ -41,7 +41,6 @@ const Dashboard: React.FC = () => {
   const { workouts: todayWorkouts, loading: workoutsLoading, error: workoutsError, addWorkout, refreshWorkouts } = useWorkouts(today);
   const { activity, loading: activityLoading, error: activityError } = useActivity();
   const { todayCalories, loading: caloriesLoading, error: caloriesError } = useTodayCalories();
-  const { todayWorkouts: workoutCalories, loading: workoutCaloriesLoading, error: workoutCaloriesError } = useTodayWorkouts();
   const { foodMenu } = useFoodMenu();
   
   const [addMealDialogOpen, setAddMealDialogOpen] = useState(false);
@@ -72,7 +71,7 @@ const Dashboard: React.FC = () => {
   };
 
   // エラーハンドリング
-  if (userError || weightError || calorieError || mealsError || workoutsError || activityError || caloriesError || workoutCaloriesError) {
+  if (userError || weightError || calorieError || mealsError || workoutsError || activityError || caloriesError) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Alert severity="error">
@@ -83,7 +82,7 @@ const Dashboard: React.FC = () => {
   }
 
   // ローディング状態
-  if (userLoading || weightLoading || calorieLoading || mealsLoading || workoutsLoading || activityLoading || caloriesLoading || workoutCaloriesLoading) {
+  if (userLoading || weightLoading || calorieLoading || mealsLoading || workoutsLoading || activityLoading || caloriesLoading) {
     return (
       <Container maxWidth="lg" sx={{ py: 4, display: 'flex', justifyContent: 'center' }}>
         <CircularProgress />

@@ -20,7 +20,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { useMeals, useFoodMenu } from '../hooks/useHealthData';
+import { useMeals } from '../hooks/useHealthData';
 import AddMealDialog from '../components/AddMealDialog';
 
 const MealPage: React.FC = () => {
@@ -29,7 +29,6 @@ const MealPage: React.FC = () => {
   
   const formattedDate = format(selectedDate, 'yyyy-MM-dd');
   const { meals, loading: mealsLoading, error: mealsError, addMeal, refreshMeals } = useMeals(formattedDate);
-  const { foodMenu } = useFoodMenu();
 
   const handleAddMeal = async (mealData: any) => {
     try {
