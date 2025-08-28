@@ -22,9 +22,12 @@ import {
   Favorite,
 } from '@mui/icons-material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { useUser, useWeightData, useCalorieData, useMeals, useActivity, useTodayCalories, useFoodMenu } from './hooks/useHealthData';
+import { useUser, useWeightData, useCalorieData, useMeals, useActivity, useTodayCalories, useFoodMenu, useWorkouts, useTodayWorkouts } from './hooks/useHealthData';
 import AddMealDialog from './components/AddMealDialog';
 import MealDetailCard from './components/MealDetailCard';
+import { AddWorkoutDialog } from './components/AddWorkoutDialog';
+import { WorkoutDetailCard } from './components/WorkoutDetailCard';
+import { WorkoutRecordInput } from './services/apiService';
 
 const App: React.FC = () => {
   const { user, loading: userLoading, error: userError } = useUser();
@@ -33,11 +36,14 @@ const App: React.FC = () => {
   
   const today = new Date().toISOString().split('T')[0];
   const { meals: todayMeals, loading: mealsLoading, error: mealsError, addMeal, refreshMeals } = useMeals(today);
+  const { workouts: todayWorkouts, loading: workoutsLoading, error: workoutsError, addWorkout, refreshWorkouts } = useWorkouts(today);
   const { activity, loading: activityLoading, error: activityError } = useActivity();
   const { todayCalories, loading: caloriesLoading, error: caloriesError } = useTodayCalories();
+  const { todayWorkouts: workoutCalories, loading: workoutCaloriesLoading, error: workoutCaloriesError } = useTodayWorkouts();
   const { foodMenu } = useFoodMenu();
   
   const [addMealDialogOpen, setAddMealDialogOpen] = useState(false);
+  const [addWorkoutDialogOpen, setAddWorkoutDialogOpen] = useState(false);
 
   const handleAddMeal = async (mealData: any) => {
     try {
@@ -49,8 +55,22 @@ const App: React.FC = () => {
     }
   };
 
+  const handleAddWorkout = async (exercises: any[]) => {
+    try {
+      const workoutData: WorkoutRecordInput = {
+        date: today,
+        exercises: exercises
+      };
+      await addWorkout(workoutData);
+      // 運動追加後にデータを更新
+      await refreshWorkouts();
+    } catch (error) {
+      console.error('運動の追加に失敗しました:', error);
+    }
+  };
+
   // エラーハンドリング
-  if (userError || weightError || calorieError || mealsError || activityError || caloriesError) {
+  if (userError || weightError || calorieError || mealsError || workoutsError || activityError || caloriesError || workoutCaloriesError) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Alert severity="error">
@@ -61,7 +81,7 @@ const App: React.FC = () => {
   }
 
   // ローディング状態
-  if (userLoading || weightLoading || calorieLoading || mealsLoading || activityLoading || caloriesLoading) {
+  if (userLoading || weightLoading || calorieLoading || mealsLoading || workoutsLoading || activityLoading || caloriesLoading || workoutCaloriesLoading) {
     return (
       <Container maxWidth="lg" sx={{ py: 4, display: 'flex', justifyContent: 'center' }}>
         <CircularProgress />
@@ -184,7 +204,7 @@ const App: React.FC = () => {
       </Box>
 
       {/* 下段のコンテンツ */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 2fr' }, gap: 3, mb: 3 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 3, mb: 3 }}>
         {/* 今日のアクティビティ */}
         <Card>
           <CardContent>
@@ -241,6 +261,16 @@ const App: React.FC = () => {
             </Button>
           </Box>
         </Box>
+
+        {/* 今日の運動記録 */}
+        <Box sx={{ position: 'relative' }}>
+          <WorkoutDetailCard workouts={todayWorkouts} />
+          <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+            <Button variant="outlined" startIcon={<Add />} size="small" onClick={() => setAddWorkoutDialogOpen(true)}>
+              運動を追加
+            </Button>
+          </Box>
+        </Box>
       </Box>
 
       {/* クイックアクション */}
@@ -252,11 +282,11 @@ const App: React.FC = () => {
           <Button variant="contained" startIcon={<Add />} onClick={() => setAddMealDialogOpen(true)}>
             食事を記録
           </Button>
+          <Button variant="contained" startIcon={<DirectionsRun />} onClick={() => setAddWorkoutDialogOpen(true)}>
+            運動を記録
+          </Button>
           <Button variant="outlined" startIcon={<MonitorWeight />}>
             体重を記録
-          </Button>
-          <Button variant="outlined" startIcon={<DirectionsRun />}>
-            運動を記録
           </Button>
           <Button variant="outlined" startIcon={<TrendingUp />}>
             レポートを見る
@@ -269,6 +299,13 @@ const App: React.FC = () => {
         open={addMealDialogOpen}
         onClose={() => setAddMealDialogOpen(false)}
         onSubmit={handleAddMeal}
+      />
+
+      {/* 運動記録ダイアログ */}
+      <AddWorkoutDialog
+        open={addWorkoutDialogOpen}
+        onClose={() => setAddWorkoutDialogOpen(false)}
+        onAdd={handleAddWorkout}
       />
     </Container>
   );

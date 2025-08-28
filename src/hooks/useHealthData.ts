@@ -1,5 +1,19 @@
 import { useState, useEffect } from 'react';
-import { apiService, User, WeightRecord, CalorieData, MealRecord, ActivityData, TodayCalories, FoodMenu, MealRecordInput } from '../services/apiService';
+import { 
+  apiService, 
+  User, 
+  WeightRecord, 
+  CalorieData, 
+  MealRecord, 
+  ActivityData, 
+  TodayCalories, 
+  FoodMenu, 
+  MealRecordInput,
+  WorkoutMenu,
+  WorkoutRecord,
+  WorkoutRecordInput,
+  TodayWorkouts
+} from '../services/apiService';
 
 export const useUser = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -199,4 +213,104 @@ export const useTodayCalories = () => {
   }, []);
 
   return { todayCalories, loading, error };
+};
+
+export const useWorkoutMenu = () => {
+  const [workoutMenu, setWorkoutMenu] = useState<WorkoutMenu[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchWorkoutMenu = async () => {
+      try {
+        setLoading(true);
+        const data = await apiService.getWorkoutMenu();
+        setWorkoutMenu(data);
+      } catch (err) {
+        setError('運動メニューの取得に失敗しました');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWorkoutMenu();
+  }, []);
+
+  return { workoutMenu, loading, error };
+};
+
+export const useWorkouts = (date?: string) => {
+  const [workouts, setWorkouts] = useState<WorkoutRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchWorkouts = async () => {
+      try {
+        setLoading(true);
+        const data = await apiService.getWorkouts(date);
+        setWorkouts(data);
+      } catch (err) {
+        setError('運動データの取得に失敗しました');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWorkouts();
+  }, [date]);
+
+  const addWorkout = async (workout: WorkoutRecordInput) => {
+    try {
+      const newWorkout = await apiService.addWorkout(workout);
+      setWorkouts(prev => [...prev, newWorkout]);
+      return newWorkout;
+    } catch (err) {
+      setError('運動の追加に失敗しました');
+      console.error(err);
+      throw err;
+    }
+  };
+
+  const refreshWorkouts = async () => {
+    try {
+      setLoading(true);
+      const data = await apiService.getWorkouts(date);
+      setWorkouts(data);
+    } catch (err) {
+      setError('運動データの取得に失敗しました');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { workouts, loading, error, addWorkout, refreshWorkouts };
+};
+
+export const useTodayWorkouts = () => {
+  const [todayWorkouts, setTodayWorkouts] = useState<TodayWorkouts | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchTodayWorkouts = async () => {
+      try {
+        setLoading(true);
+        const data = await apiService.getTodayWorkouts();
+        setTodayWorkouts(data);
+      } catch (err) {
+        setError('今日の運動データの取得に失敗しました');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTodayWorkouts();
+  }, []);
+
+  return { todayWorkouts, loading, error };
 };
