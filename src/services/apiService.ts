@@ -52,6 +52,31 @@ export interface MealRecordInput {
   date: string;
 }
 
+export interface WorkoutMenu {
+  id: number;
+  name: string;
+  calories_per_minute: number;
+  category: string;
+  intensity: string;
+}
+
+export interface WorkoutItem {
+  workout_id: number;
+  duration_minutes: number;
+}
+
+export interface WorkoutRecord {
+  id: number;
+  date: string;
+  total_calories_burned: number;
+  exercises: WorkoutItem[];
+}
+
+export interface WorkoutRecordInput {
+  date: string;
+  exercises: WorkoutItem[];
+}
+
 export interface ActivityData {
   steps: number;
   water_glasses: number;
@@ -60,6 +85,10 @@ export interface ActivityData {
 
 export interface TodayCalories {
   total_calories: number;
+}
+
+export interface TodayWorkouts {
+  total_calories_burned: number;
 }
 
 class ApiService {
@@ -139,6 +168,32 @@ class ApiService {
   // 今日の総摂取カロリーを取得
   async getTodayCalories(): Promise<TodayCalories> {
     return this.fetchData<TodayCalories>('/today-calories');
+  }
+
+  // 運動メニューを取得
+  async getWorkoutMenu(): Promise<WorkoutMenu[]> {
+    return this.fetchData<WorkoutMenu[]>('/workout-menu');
+  }
+
+  // カテゴリ別運動メニューを取得
+  async getWorkoutMenuByCategory(category: string): Promise<WorkoutMenu[]> {
+    return this.fetchData<WorkoutMenu[]>(`/workout-menu/category/${category}`);
+  }
+
+  // 運動記録を取得
+  async getWorkouts(date?: string): Promise<WorkoutRecord[]> {
+    const url = date ? `/workouts?date=${date}` : '/workouts';
+    return this.fetchData<WorkoutRecord[]>(url);
+  }
+
+  // 運動記録を追加
+  async addWorkout(workout: WorkoutRecordInput): Promise<WorkoutRecord> {
+    return this.postData<WorkoutRecord>('/workouts', workout);
+  }
+
+  // 今日の総消費カロリーを取得
+  async getTodayWorkouts(): Promise<TodayWorkouts> {
+    return this.fetchData<TodayWorkouts>('/today-workouts');
   }
 }
 

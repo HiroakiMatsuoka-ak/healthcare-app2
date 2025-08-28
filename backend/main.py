@@ -61,6 +61,27 @@ class MealRecordInput(BaseModel):
     items: List[MealItem]
     date: str
 
+class WorkoutMenu(BaseModel):
+    id: int
+    name: str
+    calories_per_minute: float
+    category: str  # "有酸素運動", "筋力トレーニング", "ストレッチ", "球体", "その他"
+    intensity: str  # "軽度", "中程度", "高強度"
+
+class WorkoutItem(BaseModel):
+    workout_id: int
+    duration_minutes: int
+
+class WorkoutRecord(BaseModel):
+    id: int
+    date: str
+    total_calories_burned: int
+    exercises: List[WorkoutItem]
+
+class WorkoutRecordInput(BaseModel):
+    date: str
+    exercises: List[WorkoutItem]
+
 class ActivityData(BaseModel):
     steps: int
     water_glasses: int
@@ -130,6 +151,55 @@ food_menu = [
     FoodMenu(id=24, name="りんご", calories_per_serving=54, category="デザート", serving_unit="1個(中)"),
     FoodMenu(id=25, name="バナナ", calories_per_serving=86, category="デザート", serving_unit="1本"),
     FoodMenu(id=26, name="ヨーグルト", calories_per_serving=62, category="デザート", serving_unit="100g"),
+]
+
+# 運動メニューのモックデータ
+workout_menu = [
+    # 有酸素運動
+    WorkoutMenu(id=1, name="ウォーキング", calories_per_minute=4.5, category="有酸素運動", intensity="軽度"),
+    WorkoutMenu(id=2, name="ジョギング", calories_per_minute=8.0, category="有酸素運動", intensity="中度"),
+    WorkoutMenu(id=3, name="ランニング", calories_per_minute=12.0, category="有酸素運動", intensity="高度"),
+    WorkoutMenu(id=4, name="サイクリング", calories_per_minute=6.5, category="有酸素運動", intensity="中度"),
+    WorkoutMenu(id=5, name="水泳", calories_per_minute=10.0, category="有酸素運動", intensity="高度"),
+    WorkoutMenu(id=6, name="エアロビクス", calories_per_minute=7.0, category="有酸素運動", intensity="中度"),
+    WorkoutMenu(id=7, name="縄跳び", calories_per_minute=11.0, category="有酸素運動", intensity="高度"),
+    
+    # 筋力トレーニング
+    WorkoutMenu(id=8, name="腕立て伏せ", calories_per_minute=5.5, category="筋力トレーニング", intensity="中度"),
+    WorkoutMenu(id=9, name="腹筋", calories_per_minute=4.5, category="筋力トレーニング", intensity="中度"),
+    WorkoutMenu(id=10, name="スクワット", calories_per_minute=6.0, category="筋力トレーニング", intensity="中度"),
+    WorkoutMenu(id=11, name="ダンベル", calories_per_minute=5.0, category="筋力トレーニング", intensity="中度"),
+    WorkoutMenu(id=12, name="懸垂", calories_per_minute=7.0, category="筋力トレーニング", intensity="高度"),
+    WorkoutMenu(id=13, name="プランク", calories_per_minute=3.5, category="筋力トレーニング", intensity="軽度"),
+    
+    # ストレッチ
+    WorkoutMenu(id=14, name="全身ストレッチ", calories_per_minute=2.5, category="ストレッチ", intensity="軽度"),
+    WorkoutMenu(id=15, name="ヨガ", calories_per_minute=3.0, category="ストレッチ", intensity="軽度"),
+    WorkoutMenu(id=16, name="ピラティス", calories_per_minute=3.5, category="ストレッチ", intensity="軽度"),
+    
+    # 球技
+    WorkoutMenu(id=17, name="テニス", calories_per_minute=7.5, category="球技", intensity="中度"),
+    WorkoutMenu(id=18, name="バスケットボール", calories_per_minute=8.5, category="球技", intensity="高度"),
+    WorkoutMenu(id=19, name="サッカー", calories_per_minute=9.0, category="球技", intensity="高度"),
+    WorkoutMenu(id=20, name="バドミントン", calories_per_minute=6.0, category="球技", intensity="中度"),
+    
+    # その他
+    WorkoutMenu(id=21, name="階段昇降", calories_per_minute=8.0, category="その他", intensity="中度"),
+    WorkoutMenu(id=22, name="掃除", calories_per_minute=3.0, category="その他", intensity="軽度"),
+    WorkoutMenu(id=23, name="庭仕事", calories_per_minute=4.0, category="その他", intensity="軽度"),
+    WorkoutMenu(id=24, name="ダンス", calories_per_minute=6.5, category="その他", intensity="中度"),
+]
+
+workout_records = [
+    WorkoutRecord(
+        id=1,
+        date="2024-03-20",
+        total_calories_burned=150,
+        exercises=[
+            WorkoutItem(workout_id=1, duration_minutes=30),
+            WorkoutItem(workout_id=14, duration_minutes=10),
+        ]
+    ),
 ]
 
 meal_records = [
@@ -235,6 +305,51 @@ async def add_meal(meal_input: MealRecordInput):
     
     meal_records.append(new_meal)
     return new_meal
+
+@app.get("/api/workout-menu", response_model=List[WorkoutMenu])
+async def get_workout_menu():
+    """運動メニューを取得"""
+    return workout_menu
+
+@app.get("/api/workout-menu/category/{category}", response_model=List[WorkoutMenu])
+async def get_workout_menu_by_category(category: str):
+    """カテゴリ別の運動メニューを取得"""
+    return [workout for workout in workout_menu if workout.category == category]
+
+@app.get("/api/workouts", response_model=List[WorkoutRecord])
+async def get_workouts(date: Optional[str] = None):
+    """運動記録を取得"""
+    if date:
+        return [workout for workout in workout_records if workout.date == date]
+    return workout_records
+
+@app.post("/api/workouts", response_model=WorkoutRecord)
+async def add_workout(workout_input: WorkoutRecordInput):
+    """運動記録を追加"""
+    # カロリー消費計算
+    total_calories_burned = 0
+    for item in workout_input.exercises:
+        workout = next((w for w in workout_menu if w.id == item.workout_id), None)
+        if workout:
+            total_calories_burned += int(workout.calories_per_minute * item.duration_minutes)
+    
+    new_workout = WorkoutRecord(
+        id=len(workout_records) + 1,
+        date=workout_input.date,
+        total_calories_burned=total_calories_burned,
+        exercises=workout_input.exercises
+    )
+    
+    workout_records.append(new_workout)
+    return new_workout
+
+@app.get("/api/today-workouts")
+async def get_today_workouts():
+    """今日の総消費カロリーを取得"""
+    today = date.today().strftime("%Y-%m-%d")
+    today_workouts = [workout for workout in workout_records if workout.date == today]
+    total_calories_burned = sum(workout.total_calories_burned for workout in today_workouts)
+    return {"total_calories_burned": total_calories_burned}
 
 @app.get("/api/activity", response_model=ActivityData)
 async def get_activity():
