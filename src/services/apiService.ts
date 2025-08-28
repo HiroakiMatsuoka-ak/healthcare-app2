@@ -23,12 +23,32 @@ export interface CalorieData {
   color: string;
 }
 
+export interface FoodMenu {
+  id: number;
+  name: string;
+  calories_per_serving: number;
+  category: string;
+  serving_unit: string;
+}
+
+export interface MealItem {
+  food_id: number;
+  servings: number;
+}
+
 export interface MealRecord {
   id: number;
   time: string;
   meal: string;
   calories: number;
-  items: string;
+  items: MealItem[];
+  date: string;
+}
+
+export interface MealRecordInput {
+  time: string;
+  meal: string;
+  items: MealItem[];
   date: string;
 }
 
@@ -90,6 +110,16 @@ class ApiService {
     return this.fetchData<CalorieData[]>('/calorie-data');
   }
 
+  // 食事メニューを取得
+  async getFoodMenu(): Promise<FoodMenu[]> {
+    return this.fetchData<FoodMenu[]>('/food-menu');
+  }
+
+  // カテゴリ別食事メニューを取得
+  async getFoodMenuByCategory(category: string): Promise<FoodMenu[]> {
+    return this.fetchData<FoodMenu[]>(`/food-menu/category/${category}`);
+  }
+
   // 食事記録を取得
   async getMeals(date?: string): Promise<MealRecord[]> {
     const url = date ? `/meals?date=${date}` : '/meals';
@@ -97,7 +127,7 @@ class ApiService {
   }
 
   // 食事記録を追加
-  async addMeal(meal: Omit<MealRecord, 'id'>): Promise<MealRecord> {
+  async addMeal(meal: MealRecordInput): Promise<MealRecord> {
     return this.postData<MealRecord>('/meals', meal);
   }
 

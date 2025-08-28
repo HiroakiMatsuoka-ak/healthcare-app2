@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Container,
@@ -8,11 +8,6 @@ import {
   LinearProgress,
   Chip,
   Avatar,
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
   Button,
   CircularProgress,
   Alert,
@@ -25,18 +20,34 @@ import {
   Add,
   TrendingUp,
   Favorite,
-  Schedule,
 } from '@mui/icons-material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { useUser, useWeightData, useCalorieData, useMeals, useActivity, useTodayCalories } from './hooks/useHealthData';
+import { useUser, useWeightData, useCalorieData, useMeals, useActivity, useTodayCalories, useFoodMenu } from './hooks/useHealthData';
+import AddMealDialog from './components/AddMealDialog';
+import MealDetailCard from './components/MealDetailCard';
 
 const App: React.FC = () => {
   const { user, loading: userLoading, error: userError } = useUser();
   const { weightData, loading: weightLoading, error: weightError } = useWeightData();
   const { calorieData, loading: calorieLoading, error: calorieError } = useCalorieData();
-  const { meals: todayMeals, loading: mealsLoading, error: mealsError } = useMeals('2025-08-27');
+  
+  const today = new Date().toISOString().split('T')[0];
+  const { meals: todayMeals, loading: mealsLoading, error: mealsError, addMeal, refreshMeals } = useMeals(today);
   const { activity, loading: activityLoading, error: activityError } = useActivity();
   const { todayCalories, loading: caloriesLoading, error: caloriesError } = useTodayCalories();
+  const { foodMenu } = useFoodMenu();
+  
+  const [addMealDialogOpen, setAddMealDialogOpen] = useState(false);
+
+  const handleAddMeal = async (mealData: any) => {
+    try {
+      await addMeal(mealData);
+      // 食事追加後にカロリーデータも更新
+      await refreshMeals();
+    } catch (error) {
+      console.error('食事の追加に失敗しました:', error);
+    }
+  };
 
   // エラーハンドリング
   if (userError || weightError || calorieError || mealsError || activityError || caloriesError) {
@@ -222,47 +233,14 @@ const App: React.FC = () => {
         </Card>
 
         {/* 今日の食事記録 */}
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">
-                <Schedule sx={{ mr: 1, verticalAlign: 'middle' }} />
-                今日の食事記録
-              </Typography>
-              <Button variant="outlined" startIcon={<Add />} size="small">
-                食事を追加
-              </Button>
-            </Box>
-            
-            <List>
-              {todayMeals.map((meal, index) => (
-                <React.Fragment key={index}>
-                  <ListItem>
-                    <ListItemIcon>
-                      <RestaurantMenu />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography variant="subtitle1">{meal.meal}</Typography>
-                          <Chip label={`${meal.calories} kcal`} size="small" />
-                        </Box>
-                      }
-                      secondary={
-                        <Box>
-                          <Typography variant="body2" color="text.secondary">
-                            {meal.time} - {meal.items}
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                  </ListItem>
-                  {index < todayMeals.length - 1 && <Divider />}
-                </React.Fragment>
-              ))}
-            </List>
-          </CardContent>
-        </Card>
+        <Box sx={{ position: 'relative' }}>
+          <MealDetailCard meals={todayMeals} foodMenu={foodMenu} />
+          <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+            <Button variant="outlined" startIcon={<Add />} size="small" onClick={() => setAddMealDialogOpen(true)}>
+              食事を追加
+            </Button>
+          </Box>
+        </Box>
       </Box>
 
       {/* クイックアクション */}
@@ -271,7 +249,7 @@ const App: React.FC = () => {
           クイックアクション
         </Typography>
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-          <Button variant="contained" startIcon={<Add />}>
+          <Button variant="contained" startIcon={<Add />} onClick={() => setAddMealDialogOpen(true)}>
             食事を記録
           </Button>
           <Button variant="outlined" startIcon={<MonitorWeight />}>
@@ -285,6 +263,13 @@ const App: React.FC = () => {
           </Button>
         </Box>
       </Box>
+
+      {/* 食事追加ダイアログ */}
+      <AddMealDialog
+        open={addMealDialogOpen}
+        onClose={() => setAddMealDialogOpen(false)}
+        onSubmit={handleAddMeal}
+      />
     </Container>
   );
 };

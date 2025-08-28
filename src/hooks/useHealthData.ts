@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiService, User, WeightRecord, CalorieData, MealRecord, ActivityData, TodayCalories } from '../services/apiService';
+import { apiService, User, WeightRecord, CalorieData, MealRecord, ActivityData, TodayCalories, FoodMenu, MealRecordInput } from '../services/apiService';
 
 export const useUser = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -98,7 +98,7 @@ export const useMeals = (date?: string) => {
     fetchMeals();
   }, [date]);
 
-  const addMeal = async (meal: Omit<MealRecord, 'id'>) => {
+  const addMeal = async (meal: MealRecordInput) => {
     try {
       const newMeal = await apiService.addMeal(meal);
       setMeals(prev => [...prev, newMeal]);
@@ -110,7 +110,20 @@ export const useMeals = (date?: string) => {
     }
   };
 
-  return { meals, loading, error, addMeal };
+  const refreshMeals = async () => {
+    try {
+      setLoading(true);
+      const data = await apiService.getMeals(date);
+      setMeals(data);
+    } catch (err) {
+      setError('食事データの取得に失敗しました');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { meals, loading, error, addMeal, refreshMeals };
 };
 
 export const useActivity = () => {
@@ -136,6 +149,31 @@ export const useActivity = () => {
   }, []);
 
   return { activity, loading, error };
+};
+
+export const useFoodMenu = () => {
+  const [foodMenu, setFoodMenu] = useState<FoodMenu[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchFoodMenu = async () => {
+      try {
+        setLoading(true);
+        const data = await apiService.getFoodMenu();
+        setFoodMenu(data);
+      } catch (err) {
+        setError('食事メニューの取得に失敗しました');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFoodMenu();
+  }, []);
+
+  return { foodMenu, loading, error };
 };
 
 export const useTodayCalories = () => {
