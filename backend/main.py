@@ -289,17 +289,53 @@ async def get_calorie_data():
 @app.get("/api/food-menu", response_model=List[FoodMenu])
 async def get_food_menu():
     """食事メニューを取得"""
+    # カテゴリマッピング（データベースの英語カテゴリから日本語表示用）
+    category_mapping = {
+        'breakfast': '主食',
+        'lunch': '主菜', 
+        'dinner': '主菜',
+        'snack': 'デザート',
+        'drink': '汁物'
+    }
+    
+    # 料理タイプに基づくより詳細なカテゴリマッピング
+    def get_japanese_category(meal):
+        category = meal.get('category', 'other')
+        cuisine_type = meal.get('cuisine_type', '')
+        meal_name = meal.get('meal_name', '').lower()
+        
+        # 主食の判定
+        if any(keyword in meal_name for keyword in ['米', 'パン', 'うどん', 'そば', 'パスタ', 'オートミール', 'rice', 'bread']):
+            return '主食'
+        # 汁物の判定
+        elif any(keyword in meal_name for keyword in ['汁', 'スープ', 'soup', '味噌汁']):
+            return '汁物'
+        # デザートの判定
+        elif any(keyword in meal_name for keyword in ['ケーキ', 'アイス', 'ヨーグルト', 'フルーツ', 'cake', 'ice', 'fruit']) or category == 'snack':
+            return 'デザート'
+        # 副菜の判定
+        elif any(keyword in meal_name for keyword in ['サラダ', '和え物', 'おひたし', 'salad', '野菜']):
+            return '副菜'
+        # その他は主菜
+        else:
+            return '主菜'
+    
     try:
         meal_data = db.get_meal_master()
         if meal_data:
             food_menu_db = []
             for meal in meal_data:
+                japanese_category = get_japanese_category(meal)
+                # typical_serving_sizeがあればそれを使用、なければ100g
+                serving_size = meal.get('typical_serving_size', 100)
+                calories_per_serving = int((meal['calories_per_100g'] * serving_size) / 100)
+                
                 food_menu_db.append(FoodMenu(
                     id=meal['meal_id'],
                     name=meal['meal_name'],
-                    calories_per_serving=meal['calories_per_100g'],
-                    category=meal.get('category', 'その他'),
-                    serving_unit="100g"
+                    calories_per_serving=calories_per_serving,
+                    category=japanese_category,
+                    serving_unit=f"{serving_size}g"
                 ))
             return food_menu_db
         else:
@@ -366,17 +402,40 @@ async def add_meal(meal_input: MealRecordInput):
 @app.get("/api/workout-menu", response_model=List[WorkoutMenu])
 async def get_workout_menu():
     """運動メニューを取得"""
+    # カテゴリマッピング（データベースの英語カテゴリから日本語表示用）
+    category_mapping = {
+        'cardio': '有酸素運動',
+        'strength': '筋力トレーニング', 
+        'flexibility': 'ストレッチ',
+        'sports': '球技',
+        'daily': 'その他'
+    }
+    
     try:
         exercise_data = db.get_exercise_master()
         if exercise_data:
             workout_menu_db = []
             for exercise in exercise_data:
+                # データベースのカテゴリを日本語にマッピング
+                japanese_category = category_mapping.get(exercise.get('category', ''), 'その他')
+                
+                # 強度レベルの日本語マッピング
+                intensity_mapping = {
+                    'beginner': '初級',
+                    'intermediate': '中級',
+                    'advanced': '上級'
+                }
+                intensity = intensity_mapping.get(exercise.get('difficulty_level', 'intermediate'), '中級')
+                
+                # MET値から1分あたりのカロリー消費量を計算（体重70kgで概算）
+                calories_per_minute = round(float(exercise.get('met_value', 3.5)) * 70 / 60, 1)
+                
                 workout_menu_db.append(WorkoutMenu(
                     id=exercise['exercise_id'],
                     name=exercise['exercise_name'],
-                    calories_per_minute=float(exercise['met_value']) * 1.17,  # 70kg体重での概算
-                    category=exercise.get('category', 'その他'),
-                    intensity="中程度"
+                    calories_per_minute=calories_per_minute,
+                    category=japanese_category,
+                    intensity=intensity
                 ))
             return workout_menu_db
         else:
