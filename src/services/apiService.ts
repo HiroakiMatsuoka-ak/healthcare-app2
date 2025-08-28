@@ -1,0 +1,115 @@
+const API_BASE_URL = 'http://localhost:8000/api';
+
+// 型定義
+export interface User {
+  id: number;
+  name: string;
+  age: number;
+  height: number;
+  current_weight: number;
+  target_weight: number;
+  daily_calorie_goal: number;
+  avatar?: string;
+}
+
+export interface WeightRecord {
+  date: string;
+  weight: number;
+}
+
+export interface CalorieData {
+  name: string;
+  value: number;
+  color: string;
+}
+
+export interface MealRecord {
+  id: number;
+  time: string;
+  meal: string;
+  calories: number;
+  items: string;
+  date: string;
+}
+
+export interface ActivityData {
+  steps: number;
+  water_glasses: number;
+  health_score: number;
+}
+
+export interface TodayCalories {
+  total_calories: number;
+}
+
+class ApiService {
+  private async fetchData<T>(url: string): Promise<T> {
+    try {
+      const response = await fetch(`${API_BASE_URL}${url}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('API request failed:', error);
+      throw error;
+    }
+  }
+
+  private async postData<T>(url: string, data: any): Promise<T> {
+    try {
+      const response = await fetch(`${API_BASE_URL}${url}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('API request failed:', error);
+      throw error;
+    }
+  }
+
+  // ユーザー情報を取得
+  async getUser(): Promise<User> {
+    return this.fetchData<User>('/user');
+  }
+
+  // 体重推移データを取得
+  async getWeightData(): Promise<WeightRecord[]> {
+    return this.fetchData<WeightRecord[]>('/weight-data');
+  }
+
+  // カロリー摂取データを取得
+  async getCalorieData(): Promise<CalorieData[]> {
+    return this.fetchData<CalorieData[]>('/calorie-data');
+  }
+
+  // 食事記録を取得
+  async getMeals(date?: string): Promise<MealRecord[]> {
+    const url = date ? `/meals?date=${date}` : '/meals';
+    return this.fetchData<MealRecord[]>(url);
+  }
+
+  // 食事記録を追加
+  async addMeal(meal: Omit<MealRecord, 'id'>): Promise<MealRecord> {
+    return this.postData<MealRecord>('/meals', meal);
+  }
+
+  // アクティビティデータを取得
+  async getActivity(): Promise<ActivityData> {
+    return this.fetchData<ActivityData>('/activity');
+  }
+
+  // 今日の総摂取カロリーを取得
+  async getTodayCalories(): Promise<TodayCalories> {
+    return this.fetchData<TodayCalories>('/today-calories');
+  }
+}
+
+export const apiService = new ApiService();

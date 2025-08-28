@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
   Container,
@@ -14,6 +14,8 @@ import {
   ListItemText,
   ListItemIcon,
   Button,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import {
   RestaurantMenu,
@@ -26,48 +28,45 @@ import {
   Schedule,
 } from '@mui/icons-material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-
-// 仮のユーザーデータ
-const mockUser = {
-  name: '田中 太郎',
-  age: 28,
-  height: 170,
-  currentWeight: 68.5,
-  targetWeight: 65,
-  dailyCalorieGoal: 2000,
-  avatar: '/api/placeholder/64/64'
-};
-
-// 体重推移データ
-const weightData = [
-  { date: '1/1', weight: 70.2 },
-  { date: '1/8', weight: 69.8 },
-  { date: '1/15', weight: 69.3 },
-  { date: '1/22', weight: 68.9 },
-  { date: '1/29', weight: 68.5 },
-];
-
-// カロリー摂取データ
-const calorieData = [
-  { name: '朝食', value: 350, color: '#FF8042' },
-  { name: '昼食', value: 650, color: '#00C49F' },
-  { name: '夕食', value: 580, color: '#FFBB28' },
-  { name: '間食', value: 120, color: '#FF6B9D' },
-];
-
-// 今日の食事記録
-const todayMeals = [
-  { time: '07:30', meal: '朝食', calories: 350, items: 'ご飯、味噌汁、卵焼き' },
-  { time: '12:30', meal: '昼食', calories: 650, items: '親子丼、サラダ' },
-  { time: '19:00', meal: '夕食', calories: 580, items: '焼き魚、野菜炒め、ご飯' },
-];
+import { useUser, useWeightData, useCalorieData, useMeals, useActivity, useTodayCalories } from './hooks/useHealthData';
 
 const App: React.FC = () => {
-  const [todayCalories] = useState(1700);
-  const [todayWater] = useState(6);
-  const [todaySteps] = useState(8234);
+  const { user, loading: userLoading, error: userError } = useUser();
+  const { weightData, loading: weightLoading, error: weightError } = useWeightData();
+  const { calorieData, loading: calorieLoading, error: calorieError } = useCalorieData();
+  const { meals: todayMeals, loading: mealsLoading, error: mealsError } = useMeals('2025-08-27');
+  const { activity, loading: activityLoading, error: activityError } = useActivity();
+  const { todayCalories, loading: caloriesLoading, error: caloriesError } = useTodayCalories();
 
-  const calorieProgress = (todayCalories / mockUser.dailyCalorieGoal) * 100;
+  // エラーハンドリング
+  if (userError || weightError || calorieError || mealsError || activityError || caloriesError) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Alert severity="error">
+          データの取得中にエラーが発生しました。バックエンドサーバーが起動しているか確認してください。
+        </Alert>
+      </Container>
+    );
+  }
+
+  // ローディング状態
+  if (userLoading || weightLoading || calorieLoading || mealsLoading || activityLoading || caloriesLoading) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4, display: 'flex', justifyContent: 'center' }}>
+        <CircularProgress />
+      </Container>
+    );
+  }
+
+  if (!user || !activity || !todayCalories) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Alert severity="warning">データが見つかりません。</Alert>
+      </Container>
+    );
+  }
+
+  const calorieProgress = (todayCalories.total_calories / user.daily_calorie_goal) * 100;
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -75,14 +74,14 @@ const App: React.FC = () => {
       <Box sx={{ mb: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Avatar
-            src={mockUser.avatar}
+            src={user.avatar}
             sx={{ width: 64, height: 64 }}
           >
-            {mockUser.name.charAt(0)}
+            {user.name.charAt(0)}
           </Avatar>
           <Box sx={{ flex: 1 }}>
             <Typography variant="h4" gutterBottom>
-              こんにちは、{mockUser.name}さん！
+              こんにちは、{user.name}さん！
             </Typography>
             <Typography variant="body1" color="text.secondary">
               今日も健康管理を頑張りましょう
@@ -102,7 +101,7 @@ const App: React.FC = () => {
             </Typography>
             <Box sx={{ mb: 2 }}>
               <Typography variant="h4" color="primary">
-                {todayCalories} / {mockUser.dailyCalorieGoal} kcal
+                {todayCalories.total_calories} / {user.daily_calorie_goal} kcal
               </Typography>
               <LinearProgress 
                 variant="determinate" 
@@ -111,7 +110,7 @@ const App: React.FC = () => {
                 color={calorieProgress > 100 ? 'error' : 'primary'}
               />
               <Typography variant="caption" color="text.secondary">
-                残り {Math.max(0, mockUser.dailyCalorieGoal - todayCalories)} kcal
+                残り {Math.max(0, user.daily_calorie_goal - todayCalories.total_calories)} kcal
               </Typography>
             </Box>
             
@@ -145,10 +144,10 @@ const App: React.FC = () => {
             </Typography>
             <Box sx={{ mb: 2 }}>
               <Typography variant="h4" color="primary">
-                {mockUser.currentWeight} kg
+                {user.current_weight} kg
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                目標: {mockUser.targetWeight} kg (残り {mockUser.currentWeight - mockUser.targetWeight} kg)
+                目標: {user.target_weight} kg (残り {user.current_weight - user.target_weight} kg)
               </Typography>
             </Box>
             
@@ -187,10 +186,10 @@ const App: React.FC = () => {
                 <DirectionsRun color="primary" sx={{ mr: 1 }} />
                 <Typography variant="body1">歩数</Typography>
               </Box>
-              <Typography variant="h5">{todaySteps.toLocaleString()} 歩</Typography>
+              <Typography variant="h5">{activity.steps.toLocaleString()} 歩</Typography>
               <LinearProgress 
                 variant="determinate" 
-                value={(todaySteps / 10000) * 100}
+                value={(activity.steps / 10000) * 100}
                 sx={{ mt: 1 }}
               />
               <Typography variant="caption" color="text.secondary">
@@ -203,10 +202,10 @@ const App: React.FC = () => {
                 <LocalDrink color="primary" sx={{ mr: 1 }} />
                 <Typography variant="body1">水分摂取</Typography>
               </Box>
-              <Typography variant="h5">{todayWater} / 8 杯</Typography>
+              <Typography variant="h5">{activity.water_glasses} / 8 杯</Typography>
               <LinearProgress 
                 variant="determinate" 
-                value={(todayWater / 8) * 100}
+                value={(activity.water_glasses / 8) * 100}
                 sx={{ mt: 1 }}
               />
             </Box>
@@ -216,7 +215,7 @@ const App: React.FC = () => {
                 <Favorite color="error" sx={{ mr: 1 }} />
                 <Typography variant="body1">健康スコア</Typography>
               </Box>
-              <Typography variant="h5" color="success.main">85点</Typography>
+              <Typography variant="h5" color="success.main">{activity.health_score}点</Typography>
               <Chip label="良好" color="success" size="small" />
             </Box>
           </CardContent>
