@@ -32,7 +32,7 @@ React + TypeScript + Material-UIのフロントエンドに、FastAPIバック�
 ## 🏗️ アーキテクチャ
 
 ```
-healthcare-app2/
+buizapp/
 ├── frontend (React + TypeScript)
 │   ├── src/services/apiService.ts    # API通信
 │   ├── src/hooks/useHealthData.ts    # データ取得フック

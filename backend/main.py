@@ -5,7 +5,7 @@ from datetime import datetime, date
 from typing import List, Optional
 import json
 
-app = FastAPI(title="Healthcare App API", version="1.0.0")
+app = FastAPI(title="ぶいざっぷ API", version="1.0.0")
 
 # CORS設定
 app.add_middleware(
@@ -91,7 +91,7 @@ activity_data = ActivityData(
 # API エンドポイント
 @app.get("/")
 async def root():
-    return {"message": "Healthcare App API is running"}
+    return {"message": "ぶいざっぷ API is running"}
 
 @app.get("/api/user", response_model=User)
 async def get_user():

@@ -1,6 +1,6 @@
-# Healthcare App 2 🏥
+# ぶいざっぷ 💪
 
-React + TypeScript + FastAPI で構築されたヘルスケア管理アプリケーション
+React + TypeScript + FastAPI で構築されたフィットネス管理アプリケーション
 
 ## 🚀 新機能
 
@@ -13,7 +13,7 @@ React + TypeScript + FastAPI で構築されたヘルスケア管理アプリケ
 
 ## 📊 ダッシュボード機能
 
-### 健康管理機能
+### フィットネス管理機能
 - **カロリー管理**: 目標摂取カロリーに対する進捗表示
 - **食事の内訳**: 朝食・昼食・夕食・間食の円グラフ表示
 - **体重管理**: 体重推移の折れ線グラフ
@@ -50,7 +50,7 @@ React + TypeScript + FastAPI で構築されたヘルスケア管理アプリケ
 ### 1. プロジェクトのクローン
 ```bash
 git clone <repository-url>
-cd healthcare-app2
+cd buizapp
 ```
 
 ### 2. フロントエンド セットアップ
@@ -102,7 +102,7 @@ start-backend.bat
 ## 📁 プロジェクト構造
 
 ```
-healthcare-app2/
+buizapp/
 ├── public/                 # 静的ファイル
 ├── src/                   # React ソースコード
 │   ├── components/        # コンポーネント

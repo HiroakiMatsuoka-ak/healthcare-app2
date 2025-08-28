@@ -1,6 +1,6 @@
-# FastAPI Healthcare App Backend
+# FastAPI ぶいざっぷ Backend
 
-このディレクトリには、ヘルスケアアプリのFastAPIバックエンドが含まれています。
+このディレクトリには、ぶいざっぷアプリのFastAPIバックエンドが含まれています。
 
 ## セットアップ
 
