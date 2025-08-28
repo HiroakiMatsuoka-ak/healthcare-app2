@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from datetime import datetime, date
 from typing import List, Optional
 import json
+from database import db
 
 app = FastAPI(title="ぶいざっぷ API", version="1.0.0")
 
@@ -253,9 +254,27 @@ async def root():
     return {"message": "ぶいざっぷ API is running"}
 
 @app.get("/api/user", response_model=User)
-async def get_user():
+async def get_user(user_id: int = 1):
     """ユーザー情報を取得"""
-    return mock_user
+    try:
+        user_data = db.get_user_by_id(user_id)
+        if user_data:
+            return User(
+                id=user_data['user_id'],
+                name=f"{user_data['first_name']} {user_data['last_name']}",
+                age=2025 - user_data['birth_date'].year,  # 簡易計算
+                height=float(user_data['height']),
+                current_weight=float(user_data['initial_weight']),  # 最新体重は別途取得が必要
+                target_weight=float(user_data['target_weight']) if user_data['target_weight'] else 65.0,
+                daily_calorie_goal=user_data['daily_calorie_goal'] or 2000,
+                avatar="/api/placeholder/64/64"
+            )
+        else:
+            # データベースに接続できない場合はモックデータを返す
+            return mock_user
+    except Exception as e:
+        print(f"Database error: {e}")
+        return mock_user
 
 @app.get("/api/weight-data", response_model=List[WeightRecord])
 async def get_weight_data():
@@ -270,7 +289,60 @@ async def get_calorie_data():
 @app.get("/api/food-menu", response_model=List[FoodMenu])
 async def get_food_menu():
     """食事メニューを取得"""
-    return food_menu
+    # カテゴリマッピング（データベースの英語カテゴリから日本語表示用）
+    category_mapping = {
+        'breakfast': '主食',
+        'lunch': '主菜', 
+        'dinner': '主菜',
+        'snack': 'デザート',
+        'drink': '汁物'
+    }
+    
+    # 料理タイプに基づくより詳細なカテゴリマッピング
+    def get_japanese_category(meal):
+        category = meal.get('category', 'other')
+        cuisine_type = meal.get('cuisine_type', '')
+        meal_name = meal.get('meal_name', '').lower()
+        
+        # 主食の判定
+        if any(keyword in meal_name for keyword in ['米', 'パン', 'うどん', 'そば', 'パスタ', 'オートミール', 'rice', 'bread']):
+            return '主食'
+        # 汁物の判定
+        elif any(keyword in meal_name for keyword in ['汁', 'スープ', 'soup', '味噌汁']):
+            return '汁物'
+        # デザートの判定
+        elif any(keyword in meal_name for keyword in ['ケーキ', 'アイス', 'ヨーグルト', 'フルーツ', 'cake', 'ice', 'fruit']) or category == 'snack':
+            return 'デザート'
+        # 副菜の判定
+        elif any(keyword in meal_name for keyword in ['サラダ', '和え物', 'おひたし', 'salad', '野菜']):
+            return '副菜'
+        # その他は主菜
+        else:
+            return '主菜'
+    
+    try:
+        meal_data = db.get_meal_master()
+        if meal_data:
+            food_menu_db = []
+            for meal in meal_data:
+                japanese_category = get_japanese_category(meal)
+                # typical_serving_sizeがあればそれを使用、なければ100g
+                serving_size = meal.get('typical_serving_size', 100)
+                calories_per_serving = int((meal['calories_per_100g'] * serving_size) / 100)
+                
+                food_menu_db.append(FoodMenu(
+                    id=meal['meal_id'],
+                    name=meal['meal_name'],
+                    calories_per_serving=calories_per_serving,
+                    category=japanese_category,
+                    serving_unit=f"{serving_size}g"
+                ))
+            return food_menu_db
+        else:
+            return food_menu
+    except Exception as e:
+        print(f"Database error: {e}")
+        return food_menu
 
 @app.get("/api/food-menu/category/{category}", response_model=List[FoodMenu])
 async def get_food_menu_by_category(category: str):
@@ -289,10 +361,31 @@ async def add_meal(meal_input: MealRecordInput):
     """食事記録を追加"""
     # カロリー計算
     total_calories = 0
-    for item in meal_input.items:
-        food = next((f for f in food_menu if f.id == item.food_id), None)
-        if food:
-            total_calories += int(food.calories_per_serving * item.servings)
+    
+    # データベースから食事メニューを取得
+    try:
+        meal_data = db.get_meal_master()
+        db_food_menu = {}
+        if meal_data:
+            for meal in meal_data:
+                db_food_menu[meal['meal_id']] = meal['calories_per_100g']
+        
+        # カロリー計算
+        for item in meal_input.items:
+            if item.food_id in db_food_menu:
+                total_calories += int(db_food_menu[item.food_id] * item.servings)
+            else:
+                # フォールバック: モックデータから検索
+                food = next((f for f in food_menu if f.id == item.food_id), None)
+                if food:
+                    total_calories += int(food.calories_per_serving * item.servings)
+    except Exception as e:
+        print(f"Database error in add_meal: {e}")
+        # フォールバック: モックデータを使用
+        for item in meal_input.items:
+            food = next((f for f in food_menu if f.id == item.food_id), None)
+            if food:
+                total_calories += int(food.calories_per_serving * item.servings)
     
     new_meal = MealRecord(
         id=len(meal_records) + 1,
@@ -309,7 +402,47 @@ async def add_meal(meal_input: MealRecordInput):
 @app.get("/api/workout-menu", response_model=List[WorkoutMenu])
 async def get_workout_menu():
     """運動メニューを取得"""
-    return workout_menu
+    # カテゴリマッピング（データベースの英語カテゴリから日本語表示用）
+    category_mapping = {
+        'cardio': '有酸素運動',
+        'strength': '筋力トレーニング', 
+        'flexibility': 'ストレッチ',
+        'sports': '球技',
+        'daily': 'その他'
+    }
+    
+    try:
+        exercise_data = db.get_exercise_master()
+        if exercise_data:
+            workout_menu_db = []
+            for exercise in exercise_data:
+                # データベースのカテゴリを日本語にマッピング
+                japanese_category = category_mapping.get(exercise.get('category', ''), 'その他')
+                
+                # 強度レベルの日本語マッピング
+                intensity_mapping = {
+                    'beginner': '初級',
+                    'intermediate': '中級',
+                    'advanced': '上級'
+                }
+                intensity = intensity_mapping.get(exercise.get('difficulty_level', 'intermediate'), '中級')
+                
+                # MET値から1分あたりのカロリー消費量を計算（体重70kgで概算）
+                calories_per_minute = round(float(exercise.get('met_value', 3.5)) * 70 / 60, 1)
+                
+                workout_menu_db.append(WorkoutMenu(
+                    id=exercise['exercise_id'],
+                    name=exercise['exercise_name'],
+                    calories_per_minute=calories_per_minute,
+                    category=japanese_category,
+                    intensity=intensity
+                ))
+            return workout_menu_db
+        else:
+            return workout_menu
+    except Exception as e:
+        print(f"Database error: {e}")
+        return workout_menu
 
 @app.get("/api/workout-menu/category/{category}", response_model=List[WorkoutMenu])
 async def get_workout_menu_by_category(category: str):
@@ -328,10 +461,32 @@ async def add_workout(workout_input: WorkoutRecordInput):
     """運動記録を追加"""
     # カロリー消費計算
     total_calories_burned = 0
-    for item in workout_input.exercises:
-        workout = next((w for w in workout_menu if w.id == item.workout_id), None)
-        if workout:
-            total_calories_burned += int(workout.calories_per_minute * item.duration_minutes)
+    
+    # データベースから運動メニューを取得
+    try:
+        exercise_data = db.get_exercise_master()
+        db_workout_menu = {}
+        if exercise_data:
+            for exercise in exercise_data:
+                calories_per_minute = float(exercise['met_value']) * 1.17  # 70kg体重での概算
+                db_workout_menu[exercise['exercise_id']] = calories_per_minute
+        
+        # カロリー消費計算
+        for item in workout_input.exercises:
+            if item.workout_id in db_workout_menu:
+                total_calories_burned += int(db_workout_menu[item.workout_id] * item.duration_minutes)
+            else:
+                # フォールバック: モックデータから検索
+                workout = next((w for w in workout_menu if w.id == item.workout_id), None)
+                if workout:
+                    total_calories_burned += int(workout.calories_per_minute * item.duration_minutes)
+    except Exception as e:
+        print(f"Database error in add_workout: {e}")
+        # フォールバック: モックデータを使用
+        for item in workout_input.exercises:
+            workout = next((w for w in workout_menu if w.id == item.workout_id), None)
+            if workout:
+                total_calories_burned += int(workout.calories_per_minute * item.duration_minutes)
     
     new_workout = WorkoutRecord(
         id=len(workout_records) + 1,
