@@ -36,6 +36,13 @@ class CalorieData(BaseModel):
     value: int
     color: str
 
+class MealRecordCreate(BaseModel):
+    time: str
+    meal: str
+    calories: int
+    items: str
+    date: str
+
 class MealRecord(BaseModel):
     id: int
     time: str
@@ -116,9 +123,17 @@ async def get_meals(date: Optional[str] = None):
     return meal_records
 
 @app.post("/api/meals", response_model=MealRecord)
-async def add_meal(meal: MealRecord):
+async def add_meal(meal_data: MealRecordCreate):
     """食事記録を追加"""
-    meal.id = len(meal_records) + 1
+    new_id = len(meal_records) + 1
+    meal = MealRecord(
+        id=new_id,
+        time=meal_data.time,
+        meal=meal_data.meal,
+        calories=meal_data.calories,
+        items=meal_data.items,
+        date=meal_data.date
+    )
     meal_records.append(meal)
     return meal
 
